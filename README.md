@@ -90,7 +90,7 @@ python martingale_backtest.py
 
 # customise
 python martingale_backtest.py --thresholds 35 40 45 50 --targets 1 5 10 20 25
-python martingale_backtest.py --leagues I2 SP2 F2 I1 --seasons 2324 2425 2526
+python martingale_backtest.py --leagues I2 SP2 F2 I1 
 python martingale_backtest.py --mode flat
 python martingale_backtest.py --list-leagues
 ```

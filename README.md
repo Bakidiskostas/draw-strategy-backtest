@@ -62,7 +62,7 @@ Given historical data and a set of draw-rate thresholds, the script:
 
 ## Key finding
 
-Across ~15,000 matches from Europe's top and second divisions, the market is
+Across ~25,000 matches from Europe's top and second divisions, Argentina Primera Division and Brasil Serie A the market is
 efficient: Bet365's margin is ~6%, and its de-vigged implied draw probability sits
 within a fraction of a percent of the actual draw rate. Any apparent profit in the
 filtered buckets comes from **match selection**, not from the staking system — and

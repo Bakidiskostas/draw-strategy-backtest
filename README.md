@@ -1,5 +1,7 @@
 # Draw Ledger — Football Draw Strategy Backtest & Dashboard
 
+**[▶ Live demo](https://bakidiskostas.github.io/draw-strategy-backtest/)**
+
 A research tool that backtests draw-betting strategies (including the martingale
 system) against real historical football results and closing odds, and generates
 a self-contained HTML dashboard. Built to answer one question honestly: **does any

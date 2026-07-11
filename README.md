@@ -48,7 +48,7 @@ Given historical data and a set of draw-rate thresholds, the script:
 2. Computes each team's **rolling 6-month draw rate** *before* each match — no
    look-ahead bias.
 3. **Filters** matches where the two teams' average draw rate clears a threshold
-   (35/40/45/50%, configurable), keeping only the higher-rated fixture when two
+   (40/45/50%, configurable), keeping only the higher-rated fixture when two
    candidates kick off at the same time.
 4. **Simulates** three staking systems walk-forward on real closing odds:
    - `flat` — constant €1 stake (the honest baseline)

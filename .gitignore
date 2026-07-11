@@ -1,0 +1,12 @@
+﻿data/
+*.csv
+dashboard.html
+backtest_results.csv
+odds_key.txt
+run.bat
+__pycache__/
+*.pyc
+.venv/
+.idea/
+.vscode/
+.DS_Store

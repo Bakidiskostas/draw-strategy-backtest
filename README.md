@@ -105,7 +105,7 @@ imports the HTML template from it.
 | Flag | Default | Meaning |
 |------|---------|---------|
 | `--leagues` | SP2 I2 F2 I1 F1 G1 D2 E1 .. | league codes (see `--list-leagues`) |
-| `--seasons` | 2122 … 2526 | seasons, football-data.co.uk format |
+| `--seasons` | 21-22 … 25-26 | seasons, football-data.co.uk format |
 | `--thresholds` | 40 45 50 | draw-rate cutoffs (%) |
 | `--targets` | 1 5 10 20 25 | recovery profit targets (€) |
 | `--mode` | both | `flat`, `recovery`, `double`, or `both` |

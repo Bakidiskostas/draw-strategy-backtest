@@ -62,7 +62,7 @@ Given historical data and a set of draw-rate thresholds, the script:
 
 ## Key finding
 
-Across ~25,000 matches from Europe's top and second divisions, Argentina Primera 
+Across ~29,000 matches from Europe's top and second divisions, Argentina Primera 
 Division and Brasil Serie A the market is
 efficient: Bet365's margin is ~6%, and its de-vigged implied draw probability sits
 within a fraction of a percent of the actual draw rate. Any apparent profit in the
@@ -89,8 +89,8 @@ Requires Python 3.10+.
 python martingale_backtest.py
 
 # customise
-python martingale_backtest.py --thresholds 35 40 45 50 --targets 1 5 10 20 25
-python martingale_backtest.py --leagues I2 SP2 F2 I1 
+python martingale_backtest.py --thresholds 40 45 50 --targets 1 5 10 20 25
+python martingale_backtest.py --leagues I2 SP2 F2 I1 D1 D2 SP1 E1 A1 BR1 FR1..
 python martingale_backtest.py --mode flat
 python martingale_backtest.py --list-leagues
 ```
@@ -104,12 +104,12 @@ imports the HTML template from it.
 
 | Flag | Default | Meaning |
 |------|---------|---------|
-| `--leagues` | SP2 I2 F2 I1 F1 G1 D2 E1 | league codes (see `--list-leagues`) |
+| `--leagues` | SP2 I2 F2 I1 F1 G1 D2 E1 .. | league codes (see `--list-leagues`) |
 | `--seasons` | 2122 … 2526 | seasons, football-data.co.uk format |
-| `--thresholds` | 35 40 45 50 | draw-rate cutoffs (%) |
+| `--thresholds` | 40 45 50 | draw-rate cutoffs (%) |
 | `--targets` | 1 5 10 20 25 | recovery profit targets (€) |
 | `--mode` | both | `flat`, `recovery`, `double`, or `both` |
-| `--max-steps` | 10 | consecutive losses before a bust |
+| `--max-steps` | 9 10 11 12 | consecutive losses before a bust |
 
 ## How to read the results
 

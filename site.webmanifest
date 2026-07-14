@@ -1,0 +1,12 @@
+{
+  "name": "Draw Ledger — Draw Betting Analysis",
+  "short_name": "Draw Ledger",
+  "description": "Football draw-strategy backtest and dashboard.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#10141b",
+  "theme_color": "#10141b",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -7,6 +7,12 @@ DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Draw Ledger — Draw Betting Analysis</title>
+<meta name="theme-color" content="#10141b">
+<link rel="icon" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Draw Ledger">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -28,6 +34,8 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;
 .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
 header{border-bottom:1px solid var(--line);padding:30px 0 26px;
   background:linear-gradient(180deg,#141a23,transparent)}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:2px}
+.logo{width:46px;height:46px;border-radius:11px;border:1px solid var(--line)}
 .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;
   letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
 h1{font-size:clamp(30px,5vw,46px);margin:8px 0 6px;font-weight:700}
@@ -145,6 +153,34 @@ td.mono{font-family:'JetBrains Mono',monospace}
   vertical-align:middle;margin-left:8px;min-width:2px}
 .bt-note{color:var(--mute);font-size:12.5px;margin-top:12px}
 .neg{color:var(--risk)} .pos{color:var(--signal)}
+tbody tr.clickable{cursor:pointer}
+.modal-overlay{position:fixed;inset:0;background:rgba(8,11,16,.72);z-index:50;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  max-width:640px;width:100%;max-height:82vh;overflow:auto;padding:22px 24px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.modal-head h3{font-size:17px}
+.modal-x{background:none;border:none;color:var(--mute);font-size:26px;cursor:pointer;line-height:1}
+.modal-x:hover{color:var(--ink)}
+.modal-sub{color:var(--mute);font-size:12.5px;margin:0 0 16px}
+.runs-grid{display:flex;flex-wrap:wrap;gap:8px}
+.run-chip{background:var(--row);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;min-width:64px}
+.run-chip .n{font-size:10px;color:var(--dim);text-transform:uppercase}
+.run-chip .v{font-size:16px;font-weight:700;color:var(--signal)}
+.run-chip.bust{border-color:var(--risk)}
+.run-chip.bust .v{color:var(--risk)}
+.runs-note{margin-top:16px;padding:12px 14px;background:var(--row);border-radius:8px;
+  font-size:12.5px;color:var(--mute)}
+.hist{display:flex;flex-direction:column;gap:6px}
+.hist-row{display:grid;grid-template-columns:92px 1fr 46px;align-items:center;gap:10px}
+.hist-k{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute)}
+.hist-bar-wrap{background:var(--row);border-radius:5px;height:16px;overflow:hidden}
+.hist-bar{height:100%;background:var(--accent);border-radius:5px;min-width:2px}
+.hist-c{font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right}
+.follow-tbl{margin-top:10px;width:auto}
+.follow-tbl td{padding:5px 16px 5px 0;border:none;font-size:12.5px}
+.follow-tbl .bad{color:var(--risk)}
 footer{padding:34px 0 60px;color:var(--dim);font-size:12px}
 footer b{color:var(--mute)}
 .empty{color:var(--mute);font-size:14px;padding:24px;background:var(--panel);
@@ -155,7 +191,9 @@ footer b{color:var(--mute)}
 </head>
 <body>
 <header><div class="wrap">
-  <div class="eyebrow">Draw Ledger · football-data.co.uk</div>
+  <div class="brand"><img src="icon-512.png" alt="" class="logo"
+     onerror="this.style.display='none'">
+  <div class="eyebrow">Draw Ledger · football-data.co.uk</div></div>
   <h1>Draw Betting Analysis</h1>
   <p class="sub">Market efficiency, edge, and staking risk for football draws —
      built on real closing odds, with nothing sugar-coated.</p>
@@ -251,7 +289,8 @@ function renderGauge(){
   const d=DATA.diag;
   document.getElementById('gen').textContent =
     'Generated '+DATA.generated+' · '+d.matches.toLocaleString('en-US')+
-    ' matches · '+d.date_from+' -> '+d.date_to;
+    ' matches · '+d.date_from+' -> '+d.date_to+
+    ((DATA.tax&&DATA.tax!=='none')?' · tax: '+DATA.tax:'');
   const real=d.draw_rate;
   const marketImpl=+(100/d.odds_median).toFixed(1);
   const devig=d.devig_draw;
@@ -360,10 +399,13 @@ function renderCalc(){
   }
   const n=DATA.candidates[0];
   slot.innerHTML=`<div class="calc">
-    <h3>Next: ${n.home} × ${n.away} · draw odds = <span class="mono" style="color:var(--signal)">${n.best_odds}</span></h3>
-    <div class="hint">Recovery recovers the accumulated loss plus the target in one
-      win. Double simply doubles the stake.</div>
+    <h3>Next: ${n.home} × ${n.away}</h3>
+    <div class="hint">Best market draw odds found: <b>${n.best_odds}</b> (${n.odds_src}).
+      You may not get that exact price — set the odds you can actually bet below.
+      Recovery recovers the accumulated loss plus the target in one win; double just doubles.</div>
     <div class="calc-inputs">
+      <div class="field"><label>Draw odds</label>
+        <input id="odds" type="number" value="${n.best_odds}" min="1.01" step="0.01"></div>
       <div class="field"><label>Accumulated loss €</label>
         <input id="cum" type="number" value="0" min="0" step="1"></div>
       <div class="field"><label>Double step (0=first)</label>
@@ -372,7 +414,8 @@ function renderCalc(){
     <div class="stake-grid" id="stakes"></div>
   </div>`;
   const recalc=()=>{
-    const o=n.best_odds;
+    let o=parseFloat(document.getElementById('odds').value);
+    if(!(o>1)){o=n.best_odds;}
     const cum=Math.max(0,+document.getElementById('cum').value||0);
     const step=Math.max(0,+document.getElementById('step').value||0);
     let cells=DATA.targets.map(t=>{
@@ -387,6 +430,7 @@ function renderCalc(){
       <div class="mode" style="margin-top:6px">worst case: €${worst}</div></div>`);
     document.getElementById('stakes').innerHTML=cells.join('');
   };
+  document.getElementById('odds').addEventListener('input',recalc);
   document.getElementById('cum').addEventListener('input',recalc);
   document.getElementById('step').addEventListener('input',recalc);
   recalc();
@@ -455,9 +499,11 @@ function renderBacktest(){
   seg.innerHTML=busts.map(b=>`<button data-b="${b}">${b}</button>`).join('');
   const cols=[['threshold_%','Threshold'],['mode','Mode'],['target_€','Target'],
     ['matches','Matches'],['real_draw_%','Real %'],['avg_odds','Avg odds'],
-    ['cycles_won','Wins'],['busts','Busts'],['final_pnl','P&L €'],
-    ['pnl_per_year','P&L/yr €'],['capital_needed','Capital €'],
-    ['roc','P&L/Cap'],['max_drawdown','Max DD €'],['max_stake','Max stake']];
+    ['cycles_won','Wins'],['busts','Busts'],['avg_bust_loss','Avg bust €'],
+    ['final_pnl','P&L €'],['pnl_per_year','P&L/yr €'],['total_staked','Staked €'],['tax_paid','Tax €'],
+    ['capital_needed','Capital €'],['roc','P&L/Cap'],['min_bankroll','Min bal €'],
+    ['worst_streak','Worst run'],['worst_streak_capital','Follow €'],
+    ['max_stake','Max stake']];
   const draw=()=>{
     seg.querySelectorAll('button').forEach(b=>
       b.classList.toggle('on', +b.dataset.b===curBust));
@@ -465,14 +511,19 @@ function renderBacktest(){
     const data=bt.filter(r=>r.league===pick && r.bust_at===curBust);
     let head='<thead><tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr></thead>';
     let body='<tbody>'+data.map(r=>{
-      return '<tr>'+cols.map(c=>{
+      const tds=cols.map(c=>{
         let v=r[c[0]];let cls='mono';
         if(c[0]=='final_pnl'||c[0]=='pnl_per_year'||c[0]=='roc')cls+=((typeof v==='number'&&v<0)?' neg':' pos');
+        if(c[0]=='min_bankroll'&&typeof v==='number'&&v<0)cls+=' neg';
         if(c[0]=='mode'||c[0]=='target_€')cls='';
         return `<td class="${cls}">${v}</td>`;
-      }).join('')+'</tr>';
+      }).join('');
+      return `<tr class="clickable" data-skey="${r.league}|${r['threshold_%']}" data-thr="${r['threshold_%']}">${tds}</tr>`;
     }).join('')+'</tbody>';
     document.getElementById('bt').innerHTML=head+body;
+    document.querySelectorAll('#bt tbody tr.clickable').forEach(tr=>{
+      tr.addEventListener('click',()=>openStreaks(tr.dataset.skey,tr.dataset.thr,pick));
+    });
   };
   sel.addEventListener('change',draw);
   seg.addEventListener('click',e=>{
@@ -482,10 +533,67 @@ function renderBacktest(){
   draw();
 }
 
-if(DATA){renderGauge();renderStats();renderNext();renderCalc();renderReality();renderLeagues();renderBacktest();}
+function openStreaks(key,thr,league){
+  const st=(DATA.streaks||{})[key];
+  if(!st){return;}
+  const dist=st.dist||{};
+  const attempts=Object.keys(dist).map(Number).sort((a,b)=>a-b);
+  if(!attempts.length){return;}
+  const maxCount=Math.max(...attempts.map(k=>dist[k]));
+  const totalDraws=attempts.reduce((s,k)=>s+dist[k],0);
+  const lgName=(league==='ALL')?'All leagues':(((DATA.leagues||[]).find(x=>x.code===league)||{}).name||league);
+  document.getElementById('runs-title').textContent='Draws by attempt — '+lgName;
+  document.getElementById('runs-sub').textContent=
+    `Threshold ${thr}% · ${totalDraws} draws · worst streak: ${st.worst} bets. `+
+    `"Attempt k" = the draw finally came on the k-th bet (after k-1 straight non-draws).`;
+  // histogram bars
+  const bars=attempts.map(k=>{
+    const c=dist[k];
+    const w=Math.round((c/maxCount)*100);
+    const worstTag=(k===st.worst)?' style="color:var(--risk);font-weight:700"':'';
+    return `<div class="hist-row">
+      <div class="hist-k"${worstTag}>Attempt ${k}</div>
+      <div class="hist-bar-wrap"><div class="hist-bar" style="width:${w}%"></div></div>
+      <div class="hist-c">${c}</div></div>`;
+  }).join('');
+  // capital to follow the worst streak, per recovery target + double
+  const o=st.worst_odds||[];
+  const rows=(DATA.targets||[]).map(t=>{
+    let cum=0,tot=0;
+    o.forEach(od=>{const s=Math.ceil(((cum+t)/(od-1))*100)/100;tot+=s;cum+=s;});
+    return `<tr><td>Recovery €${t}</td><td class="mono">€${fmt(tot)}</td></tr>`;
+  }).join('');
+  const dblCost=Math.pow(2,o.length)-1;
+  const flatCost=o.length;
+  document.getElementById('runs-body').innerHTML=
+    `<div class="hist">${bars}</div>`+
+    `<div class="runs-note"><b>Worst case: ${st.worst} bets before a draw.</b> To follow that
+      whole streak to its win, this is the total capital you must stake:
+      <table class="follow-tbl"><tbody>
+        <tr><td>Flat €1</td><td class="mono">€${fmt(flatCost,0)}</td></tr>
+        ${rows}
+        <tr><td class="bad">Double</td><td class="mono bad">€${fmt(dblCost,0)}</td></tr>
+      </tbody></table>
+      Uses the real odds of the ${st.worst} matches in that worst streak. This is the
+      "follow it through, no bust cap" cost — the number that decides if you can survive it.</div>`;
+  document.getElementById('runs-modal').style.display='flex';
+}
+function closeRuns(){document.getElementById('runs-modal').style.display='none';}
+
+if(DATA){renderGauge();renderStats();renderNext();renderCalc();renderReality();renderLeagues();renderBacktest();document.getElementById('runs-close').addEventListener('click',closeRuns);document.getElementById('runs-modal').addEventListener('click',e=>{if(e.target.id==='runs-modal')closeRuns();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRuns();});}
 else{document.body.insertAdjacentHTML('beforeend',
    '<div class="wrap"><p class="empty" style="margin:40px 0">No data found. '+
    'Run main.py first.</p></div>');}
 </script>
+<div id="runs-modal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="runs-title">Draws per run</h3>
+      <button id="runs-close" class="modal-x">×</button>
+    </div>
+    <p class="modal-sub" id="runs-sub"></p>
+    <div id="runs-body"></div>
+  </div>
+</div>
 </body>
 </html>"""

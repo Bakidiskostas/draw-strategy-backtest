@@ -312,19 +312,40 @@ def select_candidates(m: pd.DataFrame, threshold: float) -> pd.DataFrame:
 
 
 # ----------------------------------------------------------- the simulation
+def greek_tax(net_win: float) -> float:
+    """Greek tiered tax on the NET winnings of a single betting slip.
+    0-100 free, 100-200 @2.5%, 200-500 @5%, 500+ @7.5% (progressive)."""
+    if net_win <= 100:
+        return 0.0
+    brackets = [(100, 0.0), (200, 0.025), (500, 0.05), (float("inf"), 0.075)]
+    tax, prev = 0.0, 0.0
+    for cap, rate in brackets:
+        if net_win > prev:
+            tax += (min(net_win, cap) - prev) * rate
+            prev = cap
+        else:
+            break
+    return tax
+
+
 def simulate(cands: pd.DataFrame, mode: str, target: float,
-             max_steps: int, base_stake: float = 1.0) -> dict:
+             max_steps: int, base_stake: float = 1.0,
+             tax_mode: str = "none", tax_rate: float = 0.0) -> dict:
     """
     Σειριακή προσομοίωση ενός παίκτη: ένα ποντάρισμα τη φορά,
     χρονολογική σειρά, πραγματικές closing odds.
+    tax_mode: 'none' | 'de' (rate on every stake) | 'gr' (tiered on each win).
     """
     bankroll = 0.0
     cum_loss = 0.0
     step = 0
     peak, max_dd = 0.0, 0.0
+    min_bankroll = 0.0
     max_stake_used = 0.0
     cycles_won, busts, bets = 0, 0, 0
     worst_seq_loss = 0.0
+    total_staked = 0.0
+    total_tax = 0.0
     step_at_bust = []
 
     for _, row in cands.iterrows():
@@ -337,14 +358,27 @@ def simulate(cands: pd.DataFrame, mode: str, target: float,
             stake = base_stake
         stake = math.ceil(stake * 100) / 100
         max_stake_used = max(max_stake_used, stake)
+        total_staked += stake
         bets += 1
+
+        # Germany: 5.3% of every stake, regardless of outcome
+        if tax_mode == "de":
+            t = tax_rate * stake
+            bankroll -= t
+            total_tax += t
 
         if row["IsDraw"] == 1:
             # Οι απώλειες του κύκλου έχουν ΗΔΗ αφαιρεθεί από το bankroll
             # στα προηγούμενα χαμένα ποντάρια. Εδώ προσθέτουμε ΜΟΝΟ το
             # καθαρό κέρδος του νικηφόρου στοιχήματος. (Το cum_loss είναι
             # απλώς μεταβλητή για το sizing, ΔΕΝ αφαιρείται ξανά.)
-            bankroll += stake * (odds - 1)
+            net_win = stake * (odds - 1)
+            bankroll += net_win
+            # Greece: tiered tax on this slip's net winnings
+            if tax_mode == "gr":
+                t = greek_tax(net_win)
+                bankroll -= t
+                total_tax += t
             cycles_won += 1
             cum_loss, step = 0.0, 0
         else:
@@ -359,19 +393,76 @@ def simulate(cands: pd.DataFrame, mode: str, target: float,
 
         peak = max(peak, bankroll)
         max_dd = max(max_dd, peak - bankroll)
+        min_bankroll = min(min_bankroll, bankroll)
 
-    # ανοιχτός κύκλος στο τέλος = ήδη χρεωμένος στο bankroll
-    total_staked_proxy = max_dd  # ενδεικτικό κεφάλαιο που χρειάστηκε
+    avg_bust = (sum(step_at_bust) / len(step_at_bust)) if step_at_bust else 0.0
     return {
         "bets": bets,
         "cycles_won": cycles_won,
         "busts": busts,
         "final_pnl": round(bankroll, 2),
         "max_drawdown": round(max_dd, 2),
+        "min_bankroll": round(min_bankroll, 2),
         "max_stake": round(max_stake_used, 2),
         "worst_bust_loss": round(worst_seq_loss, 2),
-        "capital_needed": round(total_staked_proxy, 2),
+        "avg_bust_loss": round(avg_bust, 2),
+        "total_staked": round(total_staked, 2),
+        "tax_paid": round(total_tax, 2),
+        "capital_needed": round(max_dd, 2),
     }
+
+
+def streak_analysis(cands: pd.DataFrame) -> dict:
+    """Distribution of 'attempts until a draw'.
+    dist[k] = how many times the draw finally came on the k-th attempt
+    (i.e. after k-1 straight non-draws). worst = the longest such streak.
+    worst_odds = the real odds of each bet in that worst streak."""
+    dist: dict[int, int] = {}
+    worst, worst_odds, cur = 0, [], []
+    for _, row in cands.iterrows():
+        cur.append(float(row["DrawOdds"]))
+        if row["IsDraw"] == 1:
+            k = len(cur)
+            dist[k] = dist.get(k, 0) + 1
+            if k > worst:
+                worst, worst_odds = k, cur[:]
+            cur = []
+    # a trailing run of non-draws never resolved into a draw -> not counted
+    return {"dist": dist, "worst": worst, "worst_odds": worst_odds}
+
+
+def follow_cost(odds_list: list, mode: str, target: float,
+                base: float = 1.0) -> float:
+    """Total capital you must stake to follow a whole streak to its win."""
+    if not odds_list:
+        return 0.0
+    if mode == "flat":
+        return round(len(odds_list) * base, 2)
+    if mode == "double":
+        return round(base * (2 ** len(odds_list) - 1), 2)
+    cum = total = 0.0                     # recovery
+    for o in odds_list:
+        s = math.ceil(((cum + target) / (o - 1)) * 100) / 100
+        total += s
+        cum += s
+    return round(total, 2)
+
+
+def draws_per_run(cands: pd.DataFrame, max_steps: int) -> list[int]:
+    """How many draws happen between busts (a max_steps losing streak).
+    Independent of the staking mode — depends only on the draw sequence."""
+    runs, wins, loss_streak = [], 0, 0
+    for d in cands["IsDraw"]:
+        if d == 1:
+            wins += 1
+            loss_streak = 0
+        else:
+            loss_streak += 1
+            if loss_streak >= max_steps:
+                runs.append(wins)
+                wins, loss_streak = 0, 0
+    runs.append(wins)      # trailing run with no closing bust
+    return runs
 
 
 # ------------------------------------------------ upcoming fixtures + odds
@@ -606,7 +697,9 @@ def compute_diagnostics(m: pd.DataFrame) -> dict:
 
 def build_dashboard(diag: dict, candidates: list[dict],
                     backtest_rows: list[dict], path: str = "dashboard.html",
-                    leagues_breakdown: list[dict] | None = None):
+                    leagues_breakdown: list[dict] | None = None,
+                    streaks_map: dict | None = None,
+                    tax_label: str = "none"):
     """Write a self-contained HTML dashboard with data embedded."""
     import json
     payload = {
@@ -614,8 +707,10 @@ def build_dashboard(diag: dict, candidates: list[dict],
         "candidates": candidates,
         "backtest": backtest_rows,
         "leagues": leagues_breakdown or [],
+        "streaks": streaks_map or {},
         "targets": DASH_TARGETS,
         "generated": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
+        "tax": tax_label,
     }
     html = DASHBOARD_TEMPLATE.replace(
         "/*__DATA__*/null", json.dumps(payload, ensure_ascii=False))
@@ -624,7 +719,8 @@ def build_dashboard(diag: dict, candidates: list[dict],
 
 
 def run_backtest(m: pd.DataFrame, thresholds, targets, modes,
-                 max_steps_list, years: float, label: str) -> list[dict]:
+                 max_steps_list, years: float, label: str,
+                 tax_mode: str = "none", tax_rate: float = 0.0) -> list[dict]:
     """Run the full backtest grid on a (possibly league-filtered) DataFrame."""
     rows = []
     for thr_pct in thresholds:
@@ -632,15 +728,18 @@ def run_backtest(m: pd.DataFrame, thresholds, targets, modes,
         n = len(cands)
         adr = cands["IsDraw"].mean() if n else float("nan")
         ao = cands["DrawOdds"].mean() if n else float("nan")
+        sa = streak_analysis(cands)
         for max_steps in max_steps_list:
             for mode in modes:
                 tgts = targets if mode == "recovery" else [None]
                 if mode == "flat":
                     tgts = [None]
                 for tgt in tgts:
-                    res = simulate(cands, mode, tgt or 1.0, max_steps)
+                    res = simulate(cands, mode, tgt or 1.0, max_steps,
+                                   tax_mode=tax_mode, tax_rate=tax_rate)
                     cap = res["capital_needed"]
                     roc = round(res["final_pnl"] / cap, 2) if cap > 0 else "-"
+                    wsc = follow_cost(sa["worst_odds"], mode, tgt or 1.0)
                     rows.append({
                         "league": label,
                         "threshold_%": thr_pct, "bust_at": max_steps,
@@ -652,6 +751,8 @@ def run_backtest(m: pd.DataFrame, thresholds, targets, modes,
                         **res,
                         "pnl_per_year": round(res["final_pnl"] / years, 2),
                         "roc": roc,   # P&L / Capital = return on capital at risk
+                        "worst_streak": sa["worst"],
+                        "worst_streak_capital": wsc,
                     })
     return rows
 
@@ -687,6 +788,9 @@ def main() -> None:
                     default="both")
     ap.add_argument("--max-steps", nargs="+", type=int, default=[8, 9, 10, 11, 12],
                     help="consecutive losses that count as a bust (one or more)")
+    ap.add_argument("--tax", choices=["none", "de", "gr"], default="none",
+                    help="withholding tax: de=Germany 5.3%% on stake, "
+                         "gr=Greece tiered on winnings")
     ap.add_argument("--list-leagues", action="store_true")
     args = ap.parse_args()
 
@@ -705,17 +809,41 @@ def main() -> None:
 
     modes = (["flat", "recovery", "double"] if args.mode == "both"
              else [args.mode])
+    tax_rate = 0.053 if args.tax == "de" else 0.0
+    tax_label = {"none": "none", "de": "Germany 5.3% on stake",
+                 "gr": "Greece tiered on winnings"}[args.tax]
+    if args.tax != "none":
+        print(f"Applying withholding tax: {tax_label}")
 
     # combined ("ALL") backtest + a per-league backtest for the dropdown
     rows = run_backtest(m, args.thresholds, args.targets, modes,
-                        args.max_steps, years, "ALL")
+                        args.max_steps, years, "ALL",
+                        tax_mode=args.tax, tax_rate=tax_rate)
     present = [lg for lg in args.leagues if (m["League"] == lg).any()]
     for lg in present:
         rows += run_backtest(m[m["League"] == lg], args.thresholds,
-                             args.targets, modes, args.max_steps, years, lg)
+                             args.targets, modes, args.max_steps, years, lg,
+                             tax_mode=args.tax, tax_rate=tax_rate)
 
     # per-league breakdown (matches, draw rate, candidates per threshold)
     breakdown = league_breakdown(m, args.thresholds, present)
+
+    # streak analysis per league|threshold, for the click-to-inspect modal
+    streaks_map = {}
+
+    def add_streaks(sub: pd.DataFrame, label: str):
+        for thr_pct in args.thresholds:
+            c = select_candidates(sub, thr_pct / 100)
+            sa = streak_analysis(c)
+            streaks_map[f"{label}|{thr_pct}"] = {
+                "dist": {str(k): v for k, v in sorted(sa["dist"].items())},
+                "worst": sa["worst"],
+                "worst_odds": [round(o, 2) for o in sa["worst_odds"]],
+            }
+
+    add_streaks(m, "ALL")
+    for lg in present:
+        add_streaks(m[m["League"] == lg], lg)
 
     out = pd.DataFrame(rows)
     pd.set_option("display.width", 220)
@@ -744,15 +872,19 @@ def main() -> None:
         print(f"  Upcoming candidates (>={int(cand_thr*100)}%): {len(candidates)}")
     else:
         print("  (No upcoming fixtures — the dashboard will show analysis only.)")
-    # Argentina/Brazil via The Odds API (optional, needs ODDS_API_KEY)
+    # Argentina/Brazil via The Odds API (optional). Key from env var, or from a
+    # local odds_key.txt (git-ignored) — so no launcher script is required.
     api_key = os.environ.get("ODDS_API_KEY")
+    if not api_key and Path("odds_key.txt").exists():
+        api_key = Path("odds_key.txt").read_text(encoding="utf-8").strip()
     if api_key:
         print("Fetching Argentina/Brazil odds (The Odds API)...")
         candidates += fetch_odds_api_candidates(m, api_key, min_threshold=cand_thr)
         candidates.sort(key=lambda d: (d["date"], d["time"]))
     else:
         print("  (Set ODDS_API_KEY for Argentina/Brazil upcoming games — see README.)")
-    build_dashboard(diag, candidates, rows, leagues_breakdown=breakdown)
+    build_dashboard(diag, candidates, rows, leagues_breakdown=breakdown,
+                    streaks_map=streaks_map, tax_label=tax_label)
 
     print("""
 How to read this:

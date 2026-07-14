@@ -714,6 +714,15 @@ def build_dashboard(diag: dict, candidates: list[dict],
     }
     html = DASHBOARD_TEMPLATE.replace(
         "/*__DATA__*/null", json.dumps(payload, ensure_ascii=False))
+    # Embed the icon as a data URI so the logo/favicon always show, even if the
+    # PNG file isn't served next to the HTML. Falls back to the file path.
+    icon_src = "icon-512.png"
+    icon_path = Path("icon-512.png")
+    if icon_path.exists():
+        import base64
+        b64 = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+        icon_src = f"data:image/png;base64,{b64}"
+    html = html.replace("__ICON_SRC__", icon_src)
     Path(path).write_text(html, encoding="utf-8")
     print(f"Saved: {path}")
 

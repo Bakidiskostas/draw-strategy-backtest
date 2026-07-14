@@ -580,7 +580,7 @@ function openStreaks(key,thr,league){
 }
 function closeRuns(){document.getElementById('runs-modal').style.display='none';}
 
-if(DATA){renderGauge();renderStats();renderNext();renderCalc();renderReality();renderLeagues();renderBacktest();document.getElementById('runs-close').addEventListener('click',closeRuns);document.getElementById('runs-modal').addEventListener('click',e=>{if(e.target.id==='runs-modal')closeRuns();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRuns();});}
+if(DATA){renderGauge();renderStats();renderNext();renderCalc();renderReality();renderLeagues();renderBacktest();document.addEventListener('click',e=>{if(e.target&&(e.target.id==='runs-close'||e.target.id==='runs-modal'))closeRuns();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRuns();});}
 else{document.body.insertAdjacentHTML('beforeend',
    '<div class="wrap"><p class="empty" style="margin:40px 0">No data found. '+
    'Run main.py first.</p></div>');}

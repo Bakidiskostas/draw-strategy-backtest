@@ -8,8 +8,8 @@ DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Draw Ledger — Draw Betting Analysis</title>
 <meta name="theme-color" content="#10141b">
-<link rel="icon" href="icon-512.png">
-<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="__ICON_SRC__">
+<link rel="apple-touch-icon" href="__ICON_SRC__">
 <link rel="manifest" href="site.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Draw Ledger">
@@ -32,6 +32,16 @@ body{margin:0;background:var(--bg);color:var(--ink);
 h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;
   letter-spacing:-.01em;margin:0}
 .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.topbar{width:100%;background:linear-gradient(90deg,#12161d,#161d27);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.topbar-inner{max-width:1180px;margin:0 auto;padding:10px 24px;display:flex;
+  align-items:center;gap:14px}
+.topbar-logo{width:34px;height:34px;border-radius:9px}
+.topbar-name{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.14em;
+  font-size:15px;color:var(--ink)}
+.topbar-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);
+  border-left:1px solid var(--line);padding-left:14px}
+@media (max-width:560px){.topbar-tag{display:none}}
 header{border-bottom:1px solid var(--line);padding:30px 0 26px;
   background:linear-gradient(180deg,#141a23,transparent)}
 .brand{display:flex;align-items:center;gap:14px;margin-bottom:2px}
@@ -190,10 +200,14 @@ footer b{color:var(--mute)}
 </style>
 </head>
 <body>
+<div class="topbar"><div class="topbar-inner">
+  <img src="__ICON_SRC__" alt="Draw Ledger" class="topbar-logo"
+       onerror="this.style.display='none'">
+  <span class="topbar-name">DRAW&nbsp;LEDGER</span>
+  <span class="topbar-tag">Draw Betting Analysis</span>
+</div></div>
 <header><div class="wrap">
-  <div class="brand"><img src="icon-512.png" alt="" class="logo"
-     onerror="this.style.display='none'">
-  <div class="eyebrow">Draw Ledger · football-data.co.uk</div></div>
+  <div class="eyebrow">Draw Ledger · football-data.co.uk</div>
   <h1>Draw Betting Analysis</h1>
   <p class="sub">Market efficiency, edge, and staking risk for football draws —
      built on real closing odds, with nothing sugar-coated.</p>

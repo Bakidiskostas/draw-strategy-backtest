@@ -1,6 +1,6 @@
-# Draw Ledger — Football Draw Strategy Backtest & Dashboard
+![Draw Ledger](banner.svg)
 
-<img src="icon-512.png" alt="Draw Ledger" width="120" align="right">
+# Draw Ledger — Football Draw Strategy Backtest & Dashboard
 
 **[▶ Live demo](https://bakidiskostas.github.io/draw-strategy-backtest/)**
 

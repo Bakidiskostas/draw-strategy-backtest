@@ -32,16 +32,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
 h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;
   letter-spacing:-.01em;margin:0}
 .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
-.topbar{width:100%;background:linear-gradient(90deg,#12161d,#161d27);
-  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-.topbar-inner{max-width:1180px;margin:0 auto;padding:10px 24px;display:flex;
-  align-items:center;gap:14px}
-.topbar-logo{width:34px;height:34px;border-radius:9px}
-.topbar-name{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.14em;
-  font-size:15px;color:var(--ink)}
-.topbar-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);
-  border-left:1px solid var(--line);padding-left:14px}
-@media (max-width:560px){.topbar-tag{display:none}}
+.banner-wrap{width:100%;line-height:0;border-bottom:1px solid var(--line)}
+.banner-wrap svg{width:100%;height:auto;display:block}
 header{border-bottom:1px solid var(--line);padding:30px 0 26px;
   background:linear-gradient(180deg,#141a23,transparent)}
 .brand{display:flex;align-items:center;gap:14px;margin-bottom:2px}
@@ -200,12 +192,7 @@ footer b{color:var(--mute)}
 </style>
 </head>
 <body>
-<div class="topbar"><div class="topbar-inner">
-  <img src="__ICON_SRC__" alt="Draw Ledger" class="topbar-logo"
-       onerror="this.style.display='none'">
-  <span class="topbar-name">DRAW&nbsp;LEDGER</span>
-  <span class="topbar-tag">Draw Betting Analysis</span>
-</div></div>
+<div class="banner-wrap">__BANNER__</div>
 <header><div class="wrap">
   <div class="eyebrow">Draw Ledger · football-data.co.uk</div>
   <h1>Draw Betting Analysis</h1>
@@ -278,6 +265,12 @@ footer b{color:var(--mute)}
       <select id="league-filter"></select></div>
     <div class="grp"><label>Bust at</label>
       <div class="seg" id="bust-seg"></div></div>
+    <div class="grp"><label>Withholding tax</label>
+      <div class="seg" id="tax-seg">
+        <button data-t="none" class="on">None</button>
+        <button data-t="de">Germany 5.3%</button>
+        <button data-t="gr">Greece tiered</button>
+      </div></div>
   </div>
   <div style="overflow-x:auto"><table id="bt"></table></div>
   <p class="bt-note">busts = how many times a 10-loss streak blew up ·
@@ -510,6 +503,8 @@ function renderBacktest(){
   sel.innerHTML=leagues.map(c=>`<option value="${c}">${nameOf(c)}</option>`).join('');
   // default bust = 10 if present, else the middle value
   let curBust = busts.includes(10) ? 10 : busts[Math.floor(busts.length/2)];
+  let curTax = 'none';
+  const taxSeg=document.getElementById('tax-seg');
   seg.innerHTML=busts.map(b=>`<button data-b="${b}">${b}</button>`).join('');
   const cols=[['threshold_%','Threshold'],['mode','Mode'],['target_€','Target'],
     ['matches','Matches'],['real_draw_%','Real %'],['avg_odds','Avg odds'],
@@ -521,8 +516,11 @@ function renderBacktest(){
   const draw=()=>{
     seg.querySelectorAll('button').forEach(b=>
       b.classList.toggle('on', +b.dataset.b===curBust));
+    taxSeg.querySelectorAll('button').forEach(b=>
+      b.classList.toggle('on', b.dataset.t===curTax));
     const pick=sel.value;
-    const data=bt.filter(r=>r.league===pick && r.bust_at===curBust);
+    const data=bt.filter(r=>r.league===pick && r.bust_at===curBust)
+      .map(r=>{const tv=(r.taxv&&r.taxv[curTax])?r.taxv[curTax]:{}; return {...r,...tv};});
     let head='<thead><tr>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr></thead>';
     let body='<tbody>'+data.map(r=>{
       const tds=cols.map(c=>{
@@ -543,6 +541,10 @@ function renderBacktest(){
   seg.addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b)return;
     curBust=+b.dataset.b; draw();
+  });
+  taxSeg.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    curTax=b.dataset.t; draw();
   });
   draw();
 }

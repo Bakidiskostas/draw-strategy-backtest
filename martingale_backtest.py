@@ -698,8 +698,7 @@ def compute_diagnostics(m: pd.DataFrame) -> dict:
 def build_dashboard(diag: dict, candidates: list[dict],
                     backtest_rows: list[dict], path: str = "dashboard.html",
                     leagues_breakdown: list[dict] | None = None,
-                    streaks_map: dict | None = None,
-                    tax_label: str = "none"):
+                    streaks_map: dict | None = None):
     """Write a self-contained HTML dashboard with data embedded."""
     import json
     payload = {
@@ -710,7 +709,6 @@ def build_dashboard(diag: dict, candidates: list[dict],
         "streaks": streaks_map or {},
         "targets": DASH_TARGETS,
         "generated": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
-        "tax": tax_label,
     }
     html = DASHBOARD_TEMPLATE.replace(
         "/*__DATA__*/null", json.dumps(payload, ensure_ascii=False))
@@ -723,14 +721,25 @@ def build_dashboard(diag: dict, candidates: list[dict],
         b64 = base64.b64encode(icon_path.read_bytes()).decode("ascii")
         icon_src = f"data:image/png;base64,{b64}"
     html = html.replace("__ICON_SRC__", icon_src)
+    # Inline the banner SVG (responsive) so it always renders; fall back to a file ref.
+    banner_path = Path("banner.svg")
+    if banner_path.exists():
+        svg = banner_path.read_text(encoding="utf-8")
+        svg = re.sub(r'\swidth="1280"', ' width="100%"', svg, count=1)
+        svg = re.sub(r'\sheight="320"', "", svg, count=1)
+        banner = svg
+    else:
+        banner = '<img src="banner.svg" alt="Draw Ledger" style="width:100%">'
+    html = html.replace("__BANNER__", banner)
     Path(path).write_text(html, encoding="utf-8")
     print(f"Saved: {path}")
 
 
 def run_backtest(m: pd.DataFrame, thresholds, targets, modes,
-                 max_steps_list, years: float, label: str,
-                 tax_mode: str = "none", tax_rate: float = 0.0) -> list[dict]:
-    """Run the full backtest grid on a (possibly league-filtered) DataFrame."""
+                 max_steps_list, years: float, label: str) -> list[dict]:
+    """Run the full backtest grid. Each row carries all three tax variants
+    (none / de / gr) in row['taxv'] so the dashboard can switch them live."""
+    regimes = [("none", "none", 0.0), ("de", "de", 0.053), ("gr", "gr", 0.0)]
     rows = []
     for thr_pct in thresholds:
         cands = select_candidates(m, thr_pct / 100)
@@ -744,10 +753,23 @@ def run_backtest(m: pd.DataFrame, thresholds, targets, modes,
                 if mode == "flat":
                     tgts = [None]
                 for tgt in tgts:
-                    res = simulate(cands, mode, tgt or 1.0, max_steps,
-                                   tax_mode=tax_mode, tax_rate=tax_rate)
-                    cap = res["capital_needed"]
-                    roc = round(res["final_pnl"] / cap, 2) if cap > 0 else "-"
+                    taxv = {}
+                    base = None
+                    for key, txm, txr in regimes:
+                        res = simulate(cands, mode, tgt or 1.0, max_steps,
+                                       tax_mode=txm, tax_rate=txr)
+                        cap = res["capital_needed"]
+                        roc = round(res["final_pnl"] / cap, 2) if cap > 0 else "-"
+                        taxv[key] = {
+                            "final_pnl": res["final_pnl"],
+                            "pnl_per_year": round(res["final_pnl"] / years, 2),
+                            "tax_paid": res["tax_paid"],
+                            "capital_needed": res["capital_needed"],
+                            "min_bankroll": res["min_bankroll"],
+                            "roc": roc,
+                        }
+                        if key == "none":
+                            base = res
                     wsc = follow_cost(sa["worst_odds"], mode, tgt or 1.0)
                     rows.append({
                         "league": label,
@@ -757,11 +779,16 @@ def run_backtest(m: pd.DataFrame, thresholds, targets, modes,
                         "matches": n,
                         "real_draw_%": round(adr * 100, 1) if n else "-",
                         "avg_odds": round(ao, 2) if n else "-",
-                        **res,
-                        "pnl_per_year": round(res["final_pnl"] / years, 2),
-                        "roc": roc,   # P&L / Capital = return on capital at risk
+                        "cycles_won": base["cycles_won"],
+                        "busts": base["busts"],
+                        "avg_bust_loss": base["avg_bust_loss"],
+                        "total_staked": base["total_staked"],
+                        "max_stake": base["max_stake"],
                         "worst_streak": sa["worst"],
                         "worst_streak_capital": wsc,
+                        # default (no-tax) view at top level:
+                        **taxv["none"],
+                        "taxv": taxv,
                     })
     return rows
 
@@ -797,9 +824,6 @@ def main() -> None:
                     default="both")
     ap.add_argument("--max-steps", nargs="+", type=int, default=[8, 9, 10, 11, 12],
                     help="consecutive losses that count as a bust (one or more)")
-    ap.add_argument("--tax", choices=["none", "de", "gr"], default="none",
-                    help="withholding tax: de=Germany 5.3%% on stake, "
-                         "gr=Greece tiered on winnings")
     ap.add_argument("--list-leagues", action="store_true")
     args = ap.parse_args()
 
@@ -818,21 +842,15 @@ def main() -> None:
 
     modes = (["flat", "recovery", "double"] if args.mode == "both"
              else [args.mode])
-    tax_rate = 0.053 if args.tax == "de" else 0.0
-    tax_label = {"none": "none", "de": "Germany 5.3% on stake",
-                 "gr": "Greece tiered on winnings"}[args.tax]
-    if args.tax != "none":
-        print(f"Applying withholding tax: {tax_label}")
 
-    # combined ("ALL") backtest + a per-league backtest for the dropdown
+    # combined ("ALL") backtest + a per-league backtest for the dropdown.
+    # Each row carries all three tax variants (none/de/gr) for the live toggle.
     rows = run_backtest(m, args.thresholds, args.targets, modes,
-                        args.max_steps, years, "ALL",
-                        tax_mode=args.tax, tax_rate=tax_rate)
+                        args.max_steps, years, "ALL")
     present = [lg for lg in args.leagues if (m["League"] == lg).any()]
     for lg in present:
         rows += run_backtest(m[m["League"] == lg], args.thresholds,
-                             args.targets, modes, args.max_steps, years, lg,
-                             tax_mode=args.tax, tax_rate=tax_rate)
+                             args.targets, modes, args.max_steps, years, lg)
 
     # per-league breakdown (matches, draw rate, candidates per threshold)
     breakdown = league_breakdown(m, args.thresholds, present)
@@ -893,7 +911,7 @@ def main() -> None:
     else:
         print("  (Set ODDS_API_KEY for Argentina/Brazil upcoming games — see README.)")
     build_dashboard(diag, candidates, rows, leagues_breakdown=breakdown,
-                    streaks_map=streaks_map, tax_label=tax_label)
+                    streaks_map=streaks_map)
 
     print("""
 How to read this:

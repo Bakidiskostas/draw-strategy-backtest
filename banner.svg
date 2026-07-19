@@ -62,13 +62,13 @@
 
       <!-- data chips -->
       <g font-family="'Consolas','Courier New',monospace" font-size="15">
-        <rect x="1" y="222" width="250" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
-        <text x="51" y="245" fill="#57d0a3">29,000 matches · 17 leagues</text>
+        <rect x="1" y="250" width="250" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
+        <text x="10" y="245" fill="#57d0a3">29,000 matches · 17 leagues</text>
 
-        <rect x="230" y="222" width="250" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
-        <text x="280" y="245" fill="#6ea8fe">walk-forward · no look-ahead</text>
+        <rect x="230" y="250" width="250" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
+        <text x="240" y="245" fill="#6ea8fe">walk-forward · no look-ahead</text>
 
-        <rect x="450" y="222" width="200" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
+        <rect x="450" y="250" width="200" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
         <text x="500" y="245" fill="#e0a962">honest conclusion</text>
       </g>
     </g>

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 1280 320"
      width="1280"
-     height="320"
+     height="300"
      role="img"
      aria-label="Draw Ledger — Football Draw Strategy Backtest & Dashboard">
 
@@ -23,12 +23,12 @@
     </linearGradient>
 
     <clipPath id="round">
-      <rect width="1280" height="320" rx="20"/>
+      <rect width="1280" height="300" rx="20"/>
     </clipPath>
   </defs>
 
   <g clip-path="url(#round)">
-    <rect width="1280" height="320" fill="url(#bg)"/>
+    <rect width="1280" height="300" fill="url(#bg)"/>
 
     <!-- faint ledger grid -->
     <g stroke="#232b36" stroke-width="1" opacity="0.6">
@@ -38,7 +38,7 @@
     </g>
 
     <!-- green corner accent -->
-    <path d="M0 320 L0 232 L120 320 Z" fill="url(#corner)" opacity="0.9"/>
+    <path d="M0 300 L0 232 L120 300 Z" fill="url(#corner)" opacity="0.9"/>
 
     <!-- app mark -->
     <g transform="translate(70,104)">
@@ -62,13 +62,13 @@
 
       <!-- data chips -->
       <g font-family="'Consolas','Courier New',monospace" font-size="15">
-        <rect x="1" y="222" width="200" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
+        <rect x="1" y="222" width="250" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
         <text x="51" y="245" fill="#57d0a3">29,000 matches · 17 leagues</text>
 
-        <rect x="230" y="222" width="181" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
+        <rect x="230" y="222" width="250" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
         <text x="280" y="245" fill="#6ea8fe">walk-forward · no look-ahead</text>
 
-        <rect x="450" y="222" width="135" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
+        <rect x="450" y="222" width="200" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
         <text x="500" y="245" fill="#e0a962">honest conclusion</text>
       </g>
     </g>

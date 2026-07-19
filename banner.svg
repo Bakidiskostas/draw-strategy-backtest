@@ -40,10 +40,10 @@
     <!-- wordmark + subtitle -->
     <g transform="translate(230,0)">
       <text x="0" y="150" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-weight="800" font-size="60" letter-spacing="2" fill="#eef1f6">DRAW LEDGER</text>
-      <text x="3" y="196" font-family="'Consolas','Courier New',monospace" font-size="22" letter-spacing="3" fill="#8b95a7">FOOTBALL DRAW STRATEGY · BACKTEST &amp; DASHBOARD</text>
+      <text x="3" y="196" font-family="'Consolas','Courier New',monospace" font-size="21" letter-spacing="3" fill="#8b95a7">FOOTBALL DRAW STRATEGY · BACKTEST &amp; DASHBOARD</text>
 
       <!-- data chips -->
-      <g font-family="'Consolas','Courier New',monospace" font-size="13">
+      <g font-family="'Consolas','Courier New',monospace" font-size="12">
         <rect x="3" y="222" width="215" height="34" rx="8" fill="#171d26" stroke="#2a323e"/>
         <text x="18" y="245" fill="#57d0a3">29,000 matches·17 leagues</text>
 

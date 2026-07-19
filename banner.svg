@@ -1,19 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" style="width:100%; height:auto;" role="img" aria-label="Draw Ledger — Football Draw Strategy Backtest &amp; Dashboard">
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1280 320"
+     width="1280"
+     height="320"
+     role="img"
+     aria-label="Draw Ledger — Football Draw Strategy Backtest & Dashboard">
+
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0e1219"/>
       <stop offset="0.55" stop-color="#141a23"/>
       <stop offset="1" stop-color="#10141b"/>
     </linearGradient>
+
     <linearGradient id="green" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#57d0a3"/>
       <stop offset="1" stop-color="#3fae86"/>
     </linearGradient>
+
     <linearGradient id="corner" x1="0" y1="1" x2="1" y2="0">
       <stop offset="0" stop-color="#57d0a3"/>
       <stop offset="1" stop-color="#57d0a3" stop-opacity="0"/>
     </linearGradient>
-    <clipPath id="round"><rect width="1280" height="320" rx="20"/></clipPath>
+
+    <clipPath id="round">
+      <rect width="1280" height="320" rx="20"/>
+    </clipPath>
   </defs>
 
   <g clip-path="url(#round)">
@@ -26,10 +37,10 @@
       <line x1="0" y1="240" x2="1280" y2="240"/>
     </g>
 
-    <!-- green corner accent (echoes the app icon) -->
+    <!-- green corner accent -->
     <path d="M0 320 L0 232 L120 320 Z" fill="url(#corner)" opacity="0.9"/>
 
-    <!-- app mark: X % € -->
+    <!-- app mark -->
     <g transform="translate(70,104)">
       <rect x="-6" y="-6" width="124" height="124" rx="22" fill="#171d26" stroke="#2a323e"/>
       <text x="20" y="78" font-family="'Arial Black',Arial,sans-serif" font-weight="900" font-size="66" fill="#e8ecf3">X</text>
@@ -39,8 +50,15 @@
 
     <!-- wordmark + subtitle -->
     <g transform="translate(230,0)">
-      <text x="0" y="150" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-weight="800" font-size="60" letter-spacing="2" fill="#eef1f6">DRAW LEDGER</text>
-      <text x="3" y="196" font-family="'Consolas','Courier New',monospace" font-size="20" letter-spacing="3" fill="#8b95a7">FOOTBALL DRAW STRATEGY · BACKTEST &amp; DASHBOARD</text>
+      <text x="0" y="150" font-family="'Segoe UI',Helvetica,Arial,sans-serif"
+            font-weight="800" font-size="60" letter-spacing="2" fill="#eef1f6">
+        DRAW LEDGER
+      </text>
+
+      <text x="3" y="196" font-family="'Consolas','Courier New',monospace"
+            font-size="20" letter-spacing="3" fill="#8b95a7">
+        FOOTBALL DRAW STRATEGY · BACKTEST & DASHBOARD
+      </text>
 
       <!-- data chips -->
       <g font-family="'Consolas','Courier New',monospace" font-size="15">
@@ -66,10 +84,15 @@
         <rect x="170" y="16"  width="22" height="114" rx="4"/>
         <rect x="204" y="72"  width="22" height="58" rx="4"/>
       </g>
-      <!-- market line -->
+
       <polyline points="11,96 45,70 79,104 113,52 147,80 181,40 215,98"
-        fill="none" stroke="#e0a962" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
-      <text x="0" y="160" font-family="'Consolas','Courier New',monospace" font-size="15" fill="#5f6b7d">draw rate vs. market price</text>
+                fill="none" stroke="#e0a962" stroke-width="3"
+                stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
+
+      <text x="0" y="160" font-family="'Consolas','Courier New',monospace"
+            font-size="15" fill="#5f6b7d">
+        draw rate vs. market price
+      </text>
     </g>
 
     <rect x="0" y="316" width="1280" height="4" fill="url(#green)"/>

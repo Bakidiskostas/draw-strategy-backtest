@@ -40,7 +40,7 @@
     <!-- wordmark + subtitle -->
     <g transform="translate(230,0)">
       <text x="0" y="150" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-weight="800" font-size="60" letter-spacing="2" fill="#eef1f6">DRAW LEDGER</text>
-      <text x="3" y="196" font-family="'Consolas','Courier New',monospace" font-size="20" letter-spacing="3" fill="#8b95a7">FOOTBALL DRAW STRATEGY · BACKTEST &amp; DASHBOARD</text>
+      <text x="3" y="196" font-family="'Consolas','Courier New',monospace" font-size="24" letter-spacing="3" fill="#8b95a7">FOOTBALL DRAW STRATEGY · BACKTEST &amp; DASHBOARD</text>
 
       <!-- data chips -->
       <g font-family="'Consolas','Courier New',monospace" font-size="14">
